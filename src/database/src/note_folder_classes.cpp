@@ -3,105 +3,119 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <ctime>
 
-#include <SQLiteCpp/SQLiteCpp.h>
-#include <SQLiteCpp/VariadicBind.h>
+#include <sqlite_orm/sqlite_orm.h>
 
-// The following is subject to change a lot depending on the evolution of the global code ~Peter
+using namespace sqlite_orm;
+
+// NEXT STEP: COMBINE THE SAVE AND UPDATE FUNCTIONS INTO ONE FUNCTION IN BASEMODEL ~Alex
+// I'm done for today, plenty must be incorrect, but I did as much as I could.
 
 class BaseModel
 {
 public:
-    BaseModel(std::string table_name, std::vector<std::string> cols) {}
+    BaseModel(std::string table_name, std::vector<std::pair<std::string, std::string>> cols)
+        : table_name(table_name), cols(cols) {}
 
-    std::vector<std::string> get_cols()
-    {
-        return cols;
-    }
+    // Might be able to get rid of these 2 as the members are protected and not private
+    std::vector<std::pair<std::string, std::string>> get_cols() { return cols; }
+    std::string get_table_name() { return table_name; }
 
-    std::string get_table_name()
-    {
-        return table_name;
-    }
-
-    void save() {}
-    void update(std::vector<std::string> new_data)
-    {
-        std::string acc = "";
-        for (int i = 0; i < cols.size(); i++)
-        {
-            acc += cols[i] + " = ? ";
-            if (i != cols.size() - 1)
-            {
-                acc += ", ";
-            }
-        }
-        SQLite::Statement query(db, "UPDATE notes SET" + acc + "WHERE id = ?");
-        query.bind(1, title);
-        query.bind(2, content);
-        query.bind(3, modified_date);
-        query.bind(4, id);
-        query.exec();
-    }
-
-private:
+protected:
     std::string table_name;
-    std::vector<std::string> cols;
+    std::vector<std::pair<std::string, std::string>> cols;
 };
 
-/*
-class Note {
+class Note : public BaseModel
+{
 public:
-    Note() : title(""), content("") {}
-    Note( std::string& title, std::string& content) : title(title), content(content) {}
+    Note(std::string title, std::string content, std::time_t last_modified)
+        : BaseModel("note", {{"title", "TEXT"}, {"content", "TEXT"}, {"last_modified", "INTEGER"}})
+    {
+        this->title = title;
+        this->content = content;
+        this->last_modified = last_modified;
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("title", &Note::title),
+                                               make_column("content", &Note::content),
+                                               make_column("last_modified", &Note::last_modified)));
 
-    void display() {
-        std::cout << "Title: " << title << "\nContent: " << content << "\n\n";
+        storage.sync_schema();
+
+        storage.update(*this);
     }
 
+    std::string get_title() { return title; }
+    std::string get_content() { return content; }
+    std::time_t get_last_modified() { return last_modified; }
 
-    //other commands to add related to the design and graphics of the WebApp
-    // define commands to edit content -> communicate with the UI team
-    // add member time of last edit -> communicate with timer team
+    void update(std::string title, std::string content, std::time_t last_modified)
+    {
+        this->title = title;
+        this->content = content;
+        this->last_modified = last_modified;
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("title", &Note::title),
+                                               make_column("content", &Note::content),
+                                               make_column("last_modified", &Note::last_modified)));
 
-private:
+        storage.sync_schema();
+
+        storage.update(*this);
+    }
+
+    // private:  TO BE FIXED LATER
     std::string title;
     std::string content;
-    double last_edit_time;
+    std::time_t last_modified;
 };
-// Class (Regroup) notes in folders (and subfolders)
 
-class Folder {
-public:
-    void addNote( std::string& title,  std::string& content) {
-        notes.emplace_back(title, content);
-    }
+// I'm not sure the below Folder Class would work as is, but it's a start ~Alex
 
-    void displayAllNotes()  {
-        if (notes.empty()) {
-            std::cout << "No notes available.\n";
-        } else {
-            std::cout << "All Notes:\n";
-            for (std::vector<Note>::iterator note = notes.begin(); note!=notes.end();note++)  { // or for (const auto& note : notes)
-                note->display();
-            }
+class Folder : public BaseModel
+{
+    Folder(std::string title, std::vector<Note> notes)
+        : BaseModel("folder", {{"title", "TEXT"}}), title(title), notes(notes)
+    {
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("title", &Folder::title),
+                                               make_table("notes",
+                                                          make_column("title", &Note::title),
+                                                          make_column("content", &Note::content),
+                                                          make_column("last_modified", &Note::last_modified))));
+        storage.sync_schema();
+
+        // Insert the new folder into the database
+        storage.insert(*this);
+
+        // Insert all the notes into the database
+        for (auto &note : notes)
+        {
+            storage.insert(note);
         }
     }
 
+    void filter(bool sortByDate)
+    {
+        if (sortByDate)
+        {
+            std::sort(notes.begin(), notes.end(), [](Note &a, Note &b)
+                      { return a.get_last_modified() < b.get_last_modified(); });
+        }
+        else
+        {
+            std::sort(notes.begin(), notes.end(), [](Note &a, Note &b)
+                      { return a.get_title() < b.get_title(); });
+        }
+    }
 
-    //define commands to edit title and order notes (in several types of order: time of last edit, alphabetical order, ascending or descending) -> communicate with the UI team
-
+    std::vector<Note> get_notes() { return notes; }
 
 private:
-    std::vector<Note> notes;
     std::string title;
+    std::vector<Note> notes;
 };
-
-template <typename T>
-void rename(T& object) {
-    std::cout << "Enter a title: ";
-    std::getline(std::cin, object.title);
-}
-
-// define and implement a potential Window class to display several notes
-*/
