@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <algorithm>
 
 #include <sqlite_orm/sqlite_orm.h>
 
@@ -27,7 +28,7 @@ protected:
     std::vector<std::pair<std::string, std::string>> cols;
 };
 
-class Note : public BaseModel
+class Note : BaseModel
 {
 public:
     Note(std::string title, std::string content, std::time_t last_modified)
@@ -66,7 +67,6 @@ public:
 
         storage.update(*this);
     }
-
     // private:  TO BE FIXED LATER
     std::string title;
     std::string content;
@@ -75,7 +75,7 @@ public:
 
 // I'm not sure the below Folder Class would work as is, but it's a start ~Alex
 
-class Folder : public BaseModel
+class Folder : BaseModel
 {
     Folder(std::string title, std::vector<Note> notes)
         : BaseModel("folder", {{"title", "TEXT"}}), title(title), notes(notes)
@@ -118,4 +118,56 @@ class Folder : public BaseModel
 private:
     std::string title;
     std::vector<Note> notes;
+};
+
+class Focus_time : BaseModel
+{
+public:
+    Focus_time() : BaseModel("focus_time", {{"time_spent", "INTEGER"}}), time_spent(0)
+    {
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("time_spent", &Focus_time::time_spent)));
+        storage.sync_schema(true);
+
+        // Fetch existing time_spent from the database or initialize to 0
+        auto maybeTime = storage.get_optional<int>(1); // Assuming the id is 1 for simplicity
+        if (maybeTime)
+        {
+            time_spent = *maybeTime;
+        }
+        else
+        {
+            // No previous time_spent found, insert initial value
+            storage.replace(*this);
+        }
+    }
+
+    int Fetch()
+    {
+        return time_spent;
+    }
+
+    void Update(int delta)
+    {
+        time_spent += delta;
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("time_spent", &Focus_time::time_spent)));
+        storage.sync_schema(true);
+        storage.replace(*this); // Update the time in the database
+    }
+
+    void Reset()
+    {
+        time_spent = 0;
+        auto storage = make_storage("concept.db",
+                                    make_table(table_name,
+                                               make_column("time_spent", &Focus_time::time_spent)));
+        storage.sync_schema(true);
+        storage.replace(*this); // Reset the time in the database
+    }
+
+private:
+    int time_spent; // assuming time is stored in seconds
 };
