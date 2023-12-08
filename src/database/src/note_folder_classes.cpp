@@ -90,12 +90,12 @@ class Folder : BaseModel
         storage.sync_schema();
 
         // Insert the new folder into the database
-        storage.insert(*this);
+        storage.update(*this);
 
         // Insert all the notes into the database
         for (auto &note : notes)
         {
-            storage.insert(note);
+            storage.update(note);
         }
     }
 
