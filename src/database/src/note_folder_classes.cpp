@@ -12,9 +12,6 @@
 
 using namespace sqlite_orm;
 
-// NEXT STEP: COMBINE THE SAVE AND UPDATE FUNCTIONS INTO ONE FUNCTION IN BASEMODEL ~Alex and Peter
-
-
 // Storage
 // This is the storage class that will be used to interact with the database
 auto storage = make_storage("concept.db",
@@ -52,10 +49,6 @@ public:
         storage.update(*this);
     }
 
-    std::string get_title() { return title; }
-    std::string get_content() { return content; }
-    std::time_t get_last_modified() { return last_modified; }
-
     void update(std::string title, std::string content, std::time_t last_modified)
     {
         this->title = title;
@@ -71,7 +64,7 @@ public:
 
         storage.update(*this);
     }
-    // private:  TO BE FIXED LATER
+    // Variable declaration :
     std::string title;
     std::string content;
     std::time_t last_modified;
@@ -81,6 +74,7 @@ public:
 
 class Folder : BaseModel
 {
+public:
     Folder(std::string title, std::vector<Note> notes)
         : BaseModel("folder", {{"title", "TEXT"}}), title(title), notes(notes)
     {
@@ -139,18 +133,15 @@ class Folder : BaseModel
         if (sortByDate)
         {
             std::sort(notes.begin(), notes.end(), [increasing](Note &a, Note &b)
-                      { return increasing ? a.get_last_modified() < b.get_last_modified() : a.get_last_modified() > b.get_last_modified(); });
+                      { return increasing ? a.last_modified < b.last_modified : a.last_modified > b.last_modified; });
         }
         else
         {
             std::sort(notes.begin(), notes.end(), [increasing](Note &a, Note &b)
-                      { return increasing ? a.get_title() < b.get_title() : a.get_title() > b.get_title(); });
+                      { return increasing ? a.title < b.title : a.title > b.title; });
         }
     }
-
-    std::vector<Note> get_notes() { return notes; }
-
-private:
+    // Variable declaration :
     std::string title;
     std::vector<Note> notes;
 };
@@ -203,7 +194,7 @@ public:
         storage.replace(*this); // Reset the time in the database
     }
 
-private:
+    // Variable declaration :
     int time_spent; // assuming time is stored in seconds
 };
 
@@ -261,7 +252,7 @@ public:
         storage.update(command);
     }
 
-private:
+    // Variable declaration :
     std::string command_name;
     std::string command_description;
 };
