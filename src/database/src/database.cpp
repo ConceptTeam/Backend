@@ -11,7 +11,7 @@ auto init_storage(const std::string& path)
             make_column("last_modified", &Note::last_modified)),
         make_table("folders",
             make_column("id", &Folder::id, primary_key()),
-            make_column("name", &Folder::name)),
+            make_column("name", &Folder::title)),
         make_table("focus_times",
             make_column("id", &FocusTime::id, primary_key()),
             make_column("start_time", &FocusTime::start_time),

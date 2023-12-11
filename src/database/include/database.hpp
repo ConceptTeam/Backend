@@ -51,8 +51,6 @@ public:
     std::time_t last_modified;
 };
 
-Note x = Note();
-
 class Folder : public BaseModel
 {
 public:
@@ -61,7 +59,7 @@ public:
         std::optional<std::vector<Note>> notes
     );
 
-    std::string name;
+    std::string title;
     std::vector<Note> notes;
 };
 
