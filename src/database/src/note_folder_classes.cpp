@@ -8,23 +8,29 @@
 
 #include <sqlite_orm/sqlite_orm.h>
 
+#include "database.hpp"
+
 using namespace sqlite_orm;
 
 // NEXT STEP: COMBINE THE SAVE AND UPDATE FUNCTIONS INTO ONE FUNCTION IN BASEMODEL ~Alex and Peter
 
-class BaseModel
-{
-public:
-    BaseModel(std::string table_name, std::vector<std::pair<std::string, std::string>> cols)
-        : table_name(table_name), cols(cols) {}
-    // Might be able to get rid of these 2 as the members are protected and not private
-    std::vector<std::pair<std::string, std::string>> get_cols() { return cols; }
-    std::string get_table_name() { return table_name; }
 
-protected:
-    std::string table_name;
-    std::vector<std::pair<std::string, std::string>> cols;
-};
+// Storage
+// This is the storage class that will be used to interact with the database
+auto storage = make_storage("concept.db",
+                            make_table("note",
+                                       make_column("title", &Note::title),
+                                       make_column("content", &Note::content),
+                                       make_column("last_modified", &Note::last_modified)),
+                            make_table("folder",
+                                       make_column("title", &Folder::title),
+                                       make_column("notes", &Folder::notes)),
+                            make_table("focus_time",
+                                       make_column("time_spent", &Focus_time::time_spent)),
+                            make_table("commands",
+                                       make_column("command_name", &Commands::command_name),
+                                       make_column("command_description", &Commands::command_description)));
+
 
 class Note : BaseModel
 {
