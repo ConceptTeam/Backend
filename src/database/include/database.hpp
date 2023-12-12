@@ -83,5 +83,3 @@ template <typename T>
 void getObjectById(int id) {
     storage->get<T>(id);
 }
-
-// storage = std::make_unique<Storage>(initStorage("update.sqlite"));
