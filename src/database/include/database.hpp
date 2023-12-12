@@ -11,7 +11,8 @@ using namespace sqlite_orm;
 typedef std::pair<std::string, std::string> col_t;
 typedef std::vector<col_t> cols_t;
 
-struct Note {
+struct Note
+{
     int id;
     std::string title;
     std::string content;
@@ -23,7 +24,8 @@ struct Note {
     void update();
 };
 
-struct Folder {
+struct Folder
+{
     int id;
     std::string name;
     std::vector<Note> notes;
@@ -34,7 +36,8 @@ struct Folder {
     void update();
 };
 
-struct FocusTime {
+struct FocusTime
+{
     std::time_t start_time;
     std::time_t end_time;
     std::time_t time_spent;
@@ -45,7 +48,8 @@ struct FocusTime {
     void update();
 };
 
-struct Command {
+struct Command
+{
     std::string command;
     std::string description;
 
@@ -55,7 +59,8 @@ struct Command {
     void update();
 };
 
-inline auto initStorage(const std::string& path) {
+inline auto initStorage(const std::string &path)
+{
     using namespace sqlite_orm;
     return make_storage(path,
                         make_table("notes",
@@ -70,16 +75,19 @@ using Storage = decltype(initStorage(""));
 static std::unique_ptr<Storage> storage;
 
 template <typename T>
-int insertObject(T& obj) {
+int insertObject(T &obj)
+{
     return storage->insert(obj);
 }
 
 template <typename T>
-void updateObject(T& obj) {
+void updateObject(T &obj)
+{
     storage->update(obj);
 }
 
 template <typename T>
-void getObjectById(int id) {
+void getObjectById(int id)
+{
     storage->get<T>(id);
 }
