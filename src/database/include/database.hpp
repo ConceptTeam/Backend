@@ -28,12 +28,19 @@ struct Folder
 {
     int id;
     std::string name;
-    std::vector<Note> notes;
 
     Folder() = default;
 
     // int insert();
     // void update();
+};
+
+struct FolderNote
+{
+    int folder_id;
+    int note_id;
+
+    FolderNote() = default;
 };
 
 struct FocusTime
@@ -71,8 +78,10 @@ inline auto initStorage(const std::string &path)
                                    make_column("last_modified", &Note::last_modified)),
                         make_table("folders",
                                    make_column("id", &Folder::id, primary_key()),
-                                   make_column("title", &Folder::name),
-                                   make_column("notes", &Folder::notes)),
+                                   make_column("title", &Folder::name)),
+                        make_table("folder_notes",
+                                   make_column("folder_id", &FolderNote::folder_id),
+                                   make_column("note_id", &FolderNote::note_id)),
                         make_table("focus_time",
                                    make_column("start_time", &FocusTime::start_time),
                                    make_column("end_time", &FocusTime::end_time),

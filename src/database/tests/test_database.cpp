@@ -106,11 +106,7 @@ TEST(Database, InsertFolder)
     std::remove("test_insert_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_insert_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1, "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -124,9 +120,7 @@ TEST(Database, UpdateFolder)
     storage->sync_schema();
     Folder folder = {
         -1,
-        "Test",
-        {},
-    };
+        "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -144,11 +138,7 @@ TEST(Database, GetFolderById)
     std::remove("test_get_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_get_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1, "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -162,11 +152,8 @@ TEST(Database, DeleteFolder)
     std::remove("test_delete_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_delete_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1,
+                     "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -201,11 +188,8 @@ TEST(Database, InsertFolder)
     std::remove("test_insert_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_insert_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1,
+                     "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -217,11 +201,8 @@ TEST(Database, UpdateFolder)
     std::remove("test_update_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_update_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1,
+                     "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -239,11 +220,8 @@ TEST(Database, GetFolderById)
     std::remove("test_get_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_get_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1,
+                     "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -257,11 +235,8 @@ TEST(Database, DeleteFolder)
     std::remove("test_delete_folder.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_delete_folder.sqlite"));
     storage->sync_schema();
-    Folder folder = {
-        -1,
-        "Test",
-        {},
-    };
+    Folder folder = {-1,
+                     "Test"};
 
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
@@ -303,17 +278,86 @@ TEST(Database, GetAllFolders)
     storage->sync_schema();
     Folder folder1 = {
         -1,
-        "Test1",
-        {},
-    };
+        "Test1"};
     Folder folder2 = {
         -1,
-        "Test2",
-        {},
-    };
+        "Test2"};
 
     insertObject(folder1);
     insertObject(folder2);
     auto folders = storage->get_all<Folder>();
     EXPECT_EQ(folders.size(), 2);
+}
+
+TEST(Database, InsertFolderNote)
+{
+    // Remove current database
+    std::remove("test_insert_folder_note.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_insert_folder_note.sqlite"));
+    storage->sync_schema();
+    FolderNote folderNote = {
+        -1,
+        -1,
+    };
+
+    int id = insertObject(folderNote);
+    EXPECT_EQ(id, 1);
+}
+
+TEST(Database, UpdateFolderNote)
+{
+    // Remove current database
+    std::remove("test_update_folder_note.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_update_folder_note.sqlite"));
+    storage->sync_schema();
+    FolderNote folderNote = {
+        -1,
+        -1,
+    };
+
+    int id = insertObject(folderNote);
+    EXPECT_EQ(id, 1);
+    folderNote.folder_id = 1;
+    folderNote.note_id = 1;
+    updateObject(folderNote);
+    auto folderNotes = storage->get_all<FolderNote>();
+    EXPECT_EQ(folderNotes.size(), 1);
+    EXPECT_EQ(folderNotes[0].folder_id, 1);
+    EXPECT_EQ(folderNotes[0].note_id, 1);
+}
+
+TEST(Database, GetFolderNoteById)
+{
+    // Remove current database
+    std::remove("test_get_folder_note.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_get_folder_note.sqlite"));
+    storage->sync_schema();
+    FolderNote folderNote = {
+        -1,
+        -1,
+    };
+
+    int id = insertObject(folderNote);
+    EXPECT_EQ(id, 1);
+    auto folderNote2 = storage->get<FolderNote>(1);
+    EXPECT_EQ(folderNote2.folder_id, -1);
+    EXPECT_EQ(folderNote2.note_id, -1);
+}
+
+TEST(Database, DeleteFolderNote)
+{
+    // Remove current database
+    std::remove("test_delete_folder_note.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_delete_folder_note.sqlite"));
+    storage->sync_schema();
+    FolderNote folderNote = {
+        -1,
+        -1,
+    };
+
+    int id = insertObject(folderNote);
+    EXPECT_EQ(id, 1);
+    deleteObject<FolderNote>(id);
+    auto folderNotes = storage->get_all<FolderNote>();
+    EXPECT_EQ(folderNotes.size(), 0);
 }
