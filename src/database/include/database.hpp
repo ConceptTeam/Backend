@@ -20,8 +20,8 @@ struct Note
 
     Note() = default;
 
-    int insert();
-    void update();
+    // int insert();
+    // void update();
 };
 
 struct Folder
@@ -32,8 +32,8 @@ struct Folder
 
     Folder() = default;
 
-    int insert();
-    void update();
+    // int insert();
+    // void update();
 };
 
 struct FocusTime
@@ -44,19 +44,20 @@ struct FocusTime
 
     FocusTime() = default;
 
-    int insert();
-    void update();
+    // int insert();
+    // void update();
 };
 
 struct Command
 {
+    int id;
     std::string command;
     std::string description;
 
     Command() = default;
 
-    int insert();
-    void update();
+    // int insert();
+    // void update();
 };
 
 inline auto initStorage(const std::string &path)
@@ -67,7 +68,19 @@ inline auto initStorage(const std::string &path)
                                    make_column("id", &Note::id, primary_key()),
                                    make_column("title", &Note::title),
                                    make_column("content", &Note::content),
-                                   make_column("last_modified", &Note::last_modified)));
+                                   make_column("last_modified", &Note::last_modified)),
+                        make_table("folders",
+                                   make_column("id", &Folder::id, primary_key()),
+                                   make_column("title", &Folder::name),
+                                   make_column("notes", &Folder::notes)),
+                        make_table("focus_time",
+                                   make_column("start_time", &FocusTime::start_time),
+                                   make_column("end_time", &FocusTime::end_time),
+                                   make_column("time_spent", &FocusTime::time_spent)),
+                        make_table("commands",
+                                   make_column("id", &Command::id, primary_key()),
+                                   make_column("command", &Command::command),
+                                   make_column("description", &Command::description)));
 }
 
 using Storage = decltype(initStorage(""));
@@ -90,4 +103,10 @@ template <typename T>
 void getObjectById(int id)
 {
     storage->get<T>(id);
+}
+
+template <typename T>
+void deleteObject(int id)
+{
+    storage->remove<T>(id);
 }
