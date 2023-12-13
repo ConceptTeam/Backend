@@ -1,6 +1,8 @@
 [submodule "thirdparty/sqlite_orm"]
 	path = thirdparty/sqlite_orm
 	url = https://github.com/fnc12/sqlite_orm.git
+	branch = v1.8.2
 [submodule "thirdparty/googletest"]
 	path = thirdparty/googletest
 	url = https://github.com/google/googletest
+	branch = v1.14.0
