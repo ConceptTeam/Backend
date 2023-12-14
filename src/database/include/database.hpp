@@ -14,6 +14,7 @@ typedef std::vector<col_t> cols_t;
 struct Note
 {
     int id;
+    int folder_id;
     std::string title;
     std::string content;
     std::time_t last_modified;
@@ -33,14 +34,6 @@ struct Folder
 
     // int insert();
     // void update();
-};
-
-struct FolderNote
-{
-    int folder_id;
-    int note_id;
-
-    FolderNote() = default;
 };
 
 struct FocusTime
@@ -73,15 +66,13 @@ inline auto initStorage(const std::string &path)
     return make_storage(path,
                         make_table("notes",
                                    make_column("id", &Note::id, primary_key()),
+                                   make_column("folder_id", &Note::folder_id),
                                    make_column("title", &Note::title),
                                    make_column("content", &Note::content),
                                    make_column("last_modified", &Note::last_modified)),
                         make_table("folders",
                                    make_column("id", &Folder::id, primary_key()),
                                    make_column("title", &Folder::name)),
-                        make_table("folder_notes",
-                                   make_column("folder_id", &FolderNote::folder_id),
-                                   make_column("note_id", &FolderNote::note_id)),
                         make_table("focus_time",
                                    make_column("start_time", &FocusTime::start_time),
                                    make_column("end_time", &FocusTime::end_time),
