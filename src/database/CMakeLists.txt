@@ -1,26 +1,24 @@
-# Example CMake file for compiling & linking a project with the the SQLiteCpp wrapper
-#
-# Copyright (c) 2012-2023 Sebastien Rombauts (sebastien.rombauts@gmail.com)
-#
-# Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
-# or copy at http://opensource.org/licenses/MIT) 
-cmake_minimum_required(VERSION 3.1) # for "CMAKE_CXX_STANDARD" version
-project(SQLiteCpp_Example VERSION 2.0)
+cmake_minimum_required(VERSION 3.14)
 
-# SQLiteC++ 3.x now requires C++11 compiler
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(database CXX)
+set(CMAKE_CXX_STANDARD 17)
 
-# Add SQLite3 C++ wrapper around sqlite3 library (and sqlite3 itself provided for ease of use)
-# Here you can set CMake variables to avoid building Example, as well as cpplint, cppcheck...
-# or set them in the cmake command line (see for instance provided build.bat/build.sh scripts)
-set(SQLITECPP_RUN_CPPCHECK OFF CACHE BOOL "" FORCE)
-set(SQLITECPP_RUN_CPPLINT OFF CACHE BOOL "" FORCE)
-set(SQLITECPP_USE_STATIC_RUNTIME OFF CACHE BOOL "" FORCE)
-add_subdirectory(../.. SQLiteCpp) # out-of-source build requires explicit subdir name for compilation artifacts
+# target_compile_options(database INTERFACE -Wno-dev)
 
-# Add main.cpp example source code to the executable
-add_executable(SQLiteCpp_Example src/main.cpp)
+enable_testing()
 
-# Link SQLiteCpp_example1 with SQLiteCpp
-target_link_libraries(SQLiteCpp_Example SQLiteCpp)
+# add_subdirectory(dependencies)
+# add_subdirectory(src)
+
+set(database_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(database INTERFACE)
+
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../thirdparty ${CMAKE_CURRENT_BINARY_DIR}/thirdparty)
+
+target_link_libraries(database INTERFACE sqlite_orm::sqlite_orm)
+
+target_sources(database INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/database.hpp>)
+
+target_include_directories(database INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
+add_subdirectory(tests)
