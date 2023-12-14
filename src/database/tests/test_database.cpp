@@ -175,6 +175,7 @@ TEST(Database, InsertFocusTime)
     storage = std::make_unique<Storage>(initStorage("test_insert_focus_time.sqlite"));
     storage->sync_schema();
     FocusTime focusTime = {
+        -1,
         0,
         0,
         0,
@@ -191,6 +192,7 @@ TEST(Database, UpdateFocusTime)
     storage = std::make_unique<Storage>(initStorage("test_update_focus_time.sqlite"));
     storage->sync_schema();
     FocusTime focusTime = {
+        -1,
         0,
         0,
         0,
@@ -198,6 +200,7 @@ TEST(Database, UpdateFocusTime)
 
     int id = insertObject(focusTime);
     EXPECT_EQ(id, 1);
+    focusTime.id = 1;
     focusTime.start_time = 1;
     focusTime.end_time = 1;
     focusTime.time_spent = 1;
@@ -216,6 +219,7 @@ TEST(Database, GetFocusTimeById)
     storage = std::make_unique<Storage>(initStorage("test_get_focus_time.sqlite"));
     storage->sync_schema();
     FocusTime focusTime = {
+        -1,
         0,
         0,
         0,
@@ -236,6 +240,7 @@ TEST(Database, DeleteFocusTime)
     storage = std::make_unique<Storage>(initStorage("test_delete_focus_time.sqlite"));
     storage->sync_schema();
     FocusTime focusTime = {
+        -1,
         0,
         0,
         0,

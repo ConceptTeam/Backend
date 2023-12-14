@@ -38,6 +38,7 @@ struct Folder
 
 struct FocusTime
 {
+    int id;
     std::time_t start_time;
     std::time_t end_time;
     std::time_t time_spent;
@@ -74,6 +75,7 @@ inline auto initStorage(const std::string &path)
                                    make_column("id", &Folder::id, primary_key()),
                                    make_column("title", &Folder::name)),
                         make_table("focus_time",
+                                   make_column("id", &FocusTime::id, primary_key()),
                                    make_column("start_time", &FocusTime::start_time),
                                    make_column("end_time", &FocusTime::end_time),
                                    make_column("time_spent", &FocusTime::time_spent)),
