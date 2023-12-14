@@ -58,3 +58,5 @@ _deps
 .idea/
 
 build/
+
+cmake-build-debug/
