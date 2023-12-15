@@ -376,3 +376,51 @@ TEST(Database, GetAllFolders)
     auto folders = storage->get_all<Folder>();
     EXPECT_EQ(folders.size(), 2);
 }
+
+TEST(Database, SearchNotes)
+{
+    // Remove current database
+    std::remove("test_search_notes.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    storage->sync_schema();
+    Note note1 = {
+        -1,
+        -1,
+        "Test1",
+        "This is a test note",
+        std::time(nullptr),
+    };
+    Note note2 = {
+        -1,
+        -1,
+        "Test2",
+        "This is another test note",
+        std::time(nullptr) - 1,
+    };
+    Note note3 = {
+        -1,
+        -1,
+        "Test3",
+        "This note does not contain the keyword",
+        std::time(nullptr) - 2,
+    };
+
+    insertObject(note1);
+    insertObject(note2);
+    insertObject(note3);
+
+    std::string keyword = "test";
+    auto notes = searchNotes(keyword);
+    EXPECT_EQ(notes.size(), 2);
+    EXPECT_EQ(notes[0].title, "Test1");
+    EXPECT_EQ(notes[1].title, "Test2");
+
+    keyword = "another";
+    notes = searchNotes(keyword);
+    EXPECT_EQ(notes.size(), 1);
+    EXPECT_EQ(notes[0].title, "Test2");
+
+    keyword = "nonexistent";
+    notes = searchNotes(keyword);
+    EXPECT_EQ(notes.size(), 0);
+}

@@ -20,9 +20,6 @@ struct Note
     std::time_t last_modified;
 
     Note() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct Folder
@@ -31,9 +28,6 @@ struct Folder
     std::string name;
 
     Folder() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct FocusTime
@@ -44,9 +38,6 @@ struct FocusTime
     std::time_t time_spent;
 
     FocusTime() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct Command
@@ -56,9 +47,6 @@ struct Command
     std::string description;
 
     Command() = default;
-
-    // int insert();
-    // void update();
 };
 
 inline auto initStorage(const std::string &path)
@@ -111,4 +99,19 @@ template <typename T>
 void deleteObject(int id)
 {
     storage->remove<T>(id);
+}
+
+std::vector<Note> searchNotes(std::string &keyword)
+{
+    std::vector<Note> notes;
+
+    auto results = storage->get_all<Note>(
+        where(like(&Note::content, "%" + keyword + "%")),
+        multi_order_by(order_by(&Note::last_modified).desc(), order_by(&Note::title)));
+
+    for (auto &result : results)
+    {
+        notes.push_back(result);
+    }
+    return notes;
 }
