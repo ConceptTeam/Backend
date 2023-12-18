@@ -176,9 +176,7 @@ TEST(Database, InsertFocusTime)
     storage->sync_schema();
     FocusTime focus_time = {
         -1,
-        1,
-        1,
-        2021,
+        0,
         0,
     };
 
@@ -194,25 +192,19 @@ TEST(Database, UpdateFocusTime)
     storage->sync_schema();
     FocusTime focus_time = {
         -1,
-        1,
-        1,
-        2021,
+        0,
         0,
     };
 
     int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
     focus_time.id = 1;
-    focus_time.day = 2;
-    focus_time.year = 2022;
-    focus_time.month = 2;
+    focus_time.creation_time = 1;
     focus_time.time_spent = 1;
     updateObject(focus_time);
     auto focus_times = storage->get_all<FocusTime>();
     EXPECT_EQ(focus_times.size(), 1);
-    EXPECT_EQ(focus_times[0].day, 2);
-    EXPECT_EQ(focus_times[0].year, 2022);
-    EXPECT_EQ(focus_times[0].month, 2);
+    EXPECT_EQ(focus_times[0].creation_time, 1);
     EXPECT_EQ(focus_times[0].time_spent, 1);
 }
 
@@ -224,18 +216,14 @@ TEST(Database, GetFocusTimeById)
     storage->sync_schema();
     FocusTime focus_time = {
         -1,
-        1,
-        1,
-        2021,
+        0,
         0,
     };
 
     int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
     auto focus_time2 = storage->get<FocusTime>(1);
-    EXPECT_EQ(focus_time2.day, 1);
-    EXPECT_EQ(focus_time2.year, 2021);
-    EXPECT_EQ(focus_time2.month, 1);
+    EXPECT_EQ(focus_time2.creation_time, 0);
     EXPECT_EQ(focus_time2.time_spent, 0);
 }
 
@@ -247,9 +235,7 @@ TEST(Database, DeleteFocusTime)
     storage->sync_schema();
     FocusTime focus_time = {
         -1,
-        1,
-        2021,
-        1,
+        0,
         0,
     };
 
@@ -434,62 +420,50 @@ TEST(Database, SearchNotes)
 
 TEST(Database, getInterval)
 {
-    // Créer une instance de la base de données
-    std::remove("test_search_notes.sqlite");
-    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    // Remove current database
+    std::remove("test_get_interval_focus_time.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_get_interval_focus_time.sqlite"));
     storage->sync_schema();
-
     FocusTime focus_time1 = {
         -1,
-        1,
-        2,
-        2022,
+        std::time(nullptr),
         0,
     };
-
     FocusTime focus_time2 = {
         -1,
-        15,
-        2,
-        2022,
+        std::time(nullptr) - 1,
         0,
     };
-
     FocusTime focus_time3 = {
         -1,
-        28,
-        2,
-        2022,
-        0,
-    };
-
-    FocusTime focus_time4 = {
-        -1,
-        1,
-        3,
-        2022,
+        std::time(nullptr) - 2,
         0,
     };
 
     insertObject(focus_time1);
     insertObject(focus_time2);
     insertObject(focus_time3);
-    insertObject(focus_time4);
 
-    // Appeler la fonction getInterval
-    std::vector<FocusTime> result = getInterval(1, 2, 2022, 28, 2, 2022);
+    auto focus_times = getInterval(0, std::time(nullptr));
+    EXPECT_EQ(focus_times.size(), 3);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr));
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times[2].creation_time, std::time(nullptr) - 2);
 
-    // Vérifier que le résultat contient les bonnes données
-    ASSERT_EQ(result.size(), 3);
-    EXPECT_EQ(result[0].day, 1);
-    EXPECT_EQ(result[0].month, 2);
-    EXPECT_EQ(result[0].year, 2022);
+    focus_times = getInterval(std::time(nullptr) - 1, std::time(nullptr));
+    EXPECT_EQ(focus_times.size(), 2);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr));
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 1);
 
-    EXPECT_EQ(result[1].day, 15);
-    EXPECT_EQ(result[1].month, 2);
-    EXPECT_EQ(result[1].year, 2022);
+    focus_times = getInterval(std::time(nullptr) - 2, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times.size(), 2);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 2);
 
-    EXPECT_EQ(result[2].day, 28);
-    EXPECT_EQ(result[2].month, 2);
-    EXPECT_EQ(result[2].year, 2022);
+    focus_times = getInterval(std::time(nullptr) - 3, std::time(nullptr) - 2);
+    EXPECT_EQ(focus_times.size(), 1);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr) - 2);
+
+    focus_times = getInterval(std::time(nullptr) - 4, std::time(nullptr) - 3);
+    EXPECT_EQ(focus_times.size(), 0);
 }

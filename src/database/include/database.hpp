@@ -33,9 +33,7 @@ struct Folder
 struct FocusTime
 {
     int id;
-    int day;
-    int month;
-    int year;
+    std::time_t creation_time;
     std::time_t time_spent;
 
     FocusTime() = default;
@@ -65,9 +63,7 @@ inline auto initStorage(const std::string &path)
                                    make_column("title", &Folder::name)),
                         make_table("focus_time",
                                    make_column("id", &FocusTime::id, primary_key()),
-                                   make_column("day", &FocusTime::day),
-                                   make_column("month", &FocusTime::month),
-                                   make_column("year", &FocusTime::year),
+                                   make_column("creation_time", &FocusTime::creation_time),
                                    make_column("time_spent", &FocusTime::time_spent)),
                         make_table("commands",
                                    make_column("id", &Command::id, primary_key()),
@@ -118,21 +114,17 @@ std::vector<Note> searchNotes(std::string &keyword)
     return notes;
 }
 
-std::vector<FocusTime> getInterval(int day_start, int month_start, int year_start, int day_end, int month_end, int year_end)
+std::vector<FocusTime> getInterval(std::time_t start, std::time_t end)
 {
-    std::vector<FocusTime> times;
+    std::vector<FocusTime> focus_times;
 
     auto results = storage->get_all<FocusTime>(
-        where(c(&FocusTime::day) >= day_start && c(&FocusTime::month) >= month_start && c(&FocusTime::year) >= year_start &&
-              c(&FocusTime::day) <= day_end && c(&FocusTime::month) <= month_end && c(&FocusTime::year) <= year_end));
+        where(between(&FocusTime::creation_time, start, end)),
+        multi_order_by(order_by(&FocusTime::creation_time).desc()));
 
     for (auto &result : results)
     {
-        times.push_back(result);
+        focus_times.push_back(result);
     }
-    return times;
-
-    // auto results = storage->get_all<FocusTime>(
-    //     where(between(&FocusTime::day, day_start, day_end)),
-    //     multi_order_by(order_by(&FocusTime::year).desc(), order_by(&FocusTime::month).desc(), order_by(&FocusTime::day).desc()));
+    return focus_times;
 }
