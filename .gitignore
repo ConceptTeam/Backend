@@ -60,3 +60,5 @@ _deps
 build/
 
 cmake-build-debug/
+
+.DS_Store

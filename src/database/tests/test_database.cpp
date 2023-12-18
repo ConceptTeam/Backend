@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+#include <sqlite3.h>
 
 #include "database.hpp"
 
 TEST(Database, InitStorage)
 {
+    std::cout << sqlite3_version << std::endl;
     // Remove current database
     std::remove("test_init.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_init.sqlite"));
