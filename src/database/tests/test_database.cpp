@@ -174,14 +174,15 @@ TEST(Database, InsertFocusTime)
     std::remove("test_insert_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_insert_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
-        0,
+        1,
+        1,
+        2021,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
 }
 
@@ -191,25 +192,28 @@ TEST(Database, UpdateFocusTime)
     std::remove("test_update_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_update_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
-        0,
+        1,
+        1,
+        2021,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
-    focusTime.id = 1;
-    focusTime.start_time = 1;
-    focusTime.end_time = 1;
-    focusTime.time_spent = 1;
-    updateObject(focusTime);
-    auto focusTimes = storage->get_all<FocusTime>();
-    EXPECT_EQ(focusTimes.size(), 1);
-    EXPECT_EQ(focusTimes[0].start_time, 1);
-    EXPECT_EQ(focusTimes[0].end_time, 1);
-    EXPECT_EQ(focusTimes[0].time_spent, 1);
+    focus_time.id = 1;
+    focus_time.day = 2;
+    focus_time.year = 2022;
+    focus_time.month = 2;
+    focus_time.time_spent = 1;
+    updateObject(focus_time);
+    auto focus_times = storage->get_all<FocusTime>();
+    EXPECT_EQ(focus_times.size(), 1);
+    EXPECT_EQ(focus_times[0].day, 2);
+    EXPECT_EQ(focus_times[0].year, 2022);
+    EXPECT_EQ(focus_times[0].month, 2);
+    EXPECT_EQ(focus_times[0].time_spent, 1);
 }
 
 TEST(Database, GetFocusTimeById)
@@ -218,19 +222,21 @@ TEST(Database, GetFocusTimeById)
     std::remove("test_get_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_get_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
-        0,
+        1,
+        1,
+        2021,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
-    auto focusTime2 = storage->get<FocusTime>(1);
-    EXPECT_EQ(focusTime2.start_time, 0);
-    EXPECT_EQ(focusTime2.end_time, 0);
-    EXPECT_EQ(focusTime2.time_spent, 0);
+    auto focus_time2 = storage->get<FocusTime>(1);
+    EXPECT_EQ(focus_time2.day, 1);
+    EXPECT_EQ(focus_time2.year, 2021);
+    EXPECT_EQ(focus_time2.month, 1);
+    EXPECT_EQ(focus_time2.time_spent, 0);
 }
 
 TEST(Database, DeleteFocusTime)
@@ -239,18 +245,19 @@ TEST(Database, DeleteFocusTime)
     std::remove("test_delete_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_delete_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
-        0,
+        1,
+        2021,
+        1,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
     deleteObject<FocusTime>(id);
-    auto focusTimes = storage->get_all<FocusTime>();
-    EXPECT_EQ(focusTimes.size(), 0);
+    auto focus_times = storage->get_all<FocusTime>();
+    EXPECT_EQ(focus_times.size(), 0);
 }
 
 TEST(Database, InsertCommand)
@@ -423,4 +430,66 @@ TEST(Database, SearchNotes)
     keyword = "nonexistent";
     notes = searchNotes(keyword);
     EXPECT_EQ(notes.size(), 0);
+}
+
+TEST(Database, getInterval)
+{
+    // Créer une instance de la base de données
+    std::remove("test_search_notes.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    storage->sync_schema();
+
+    FocusTime focus_time1 = {
+        -1,
+        1,
+        2,
+        2022,
+        0,
+    };
+
+    FocusTime focus_time2 = {
+        -1,
+        15,
+        2,
+        2022,
+        0,
+    };
+
+    FocusTime focus_time3 = {
+        -1,
+        28,
+        2,
+        2022,
+        0,
+    };
+
+    FocusTime focus_time4 = {
+        -1,
+        1,
+        3,
+        2022,
+        0,
+    };
+
+    insertObject(focus_time1);
+    insertObject(focus_time2);
+    insertObject(focus_time3);
+    insertObject(focus_time4);
+
+    // Appeler la fonction getInterval
+    std::vector<FocusTime> result = getInterval(1, 2, 2022, 28, 2, 2022);
+
+    // Vérifier que le résultat contient les bonnes données
+    ASSERT_EQ(result.size(), 3);
+    EXPECT_EQ(result[0].day, 1);
+    EXPECT_EQ(result[0].month, 2);
+    EXPECT_EQ(result[0].year, 2022);
+
+    EXPECT_EQ(result[1].day, 15);
+    EXPECT_EQ(result[1].month, 2);
+    EXPECT_EQ(result[1].year, 2022);
+
+    EXPECT_EQ(result[2].day, 28);
+    EXPECT_EQ(result[2].month, 2);
+    EXPECT_EQ(result[2].year, 2022);
 }
