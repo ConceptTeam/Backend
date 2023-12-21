@@ -82,7 +82,7 @@ TEST(Database, GetObjectById)
 
     int id = insertObject(note);
     EXPECT_EQ(id, 1);
-    auto note2 = storage->get<Note>(1);
+    Note note2 = storage->get<Note>(1);
     EXPECT_EQ(note2.title, "Test");
 }
 

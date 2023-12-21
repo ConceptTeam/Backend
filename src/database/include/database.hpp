@@ -102,9 +102,9 @@ void updateObject(T &obj)
 }
 
 template <typename T>
-void getObjectById(int id)
+T getObjectById(int id)
 {
-    storage->get<T>(id);
+    return storage->get<T>(id);
 }
 
 template <typename T>
