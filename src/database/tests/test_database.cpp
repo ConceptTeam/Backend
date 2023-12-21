@@ -130,11 +130,11 @@ TEST(Database, UpdateFolder)
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
     folder.id = 1;
-    folder.name = "Test2";
+    folder.title = "Test2";
     updateObject(folder);
     auto folders = storage->get_all<Folder>();
     EXPECT_EQ(folders.size(), 1);
-    EXPECT_EQ(folders[0].name, "Test2");
+    EXPECT_EQ(folders[0].title, "Test2");
 }
 
 TEST(Database, GetFolderById)
@@ -149,7 +149,7 @@ TEST(Database, GetFolderById)
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
     auto folder2 = storage->get<Folder>(1);
-    EXPECT_EQ(folder2.name, "Test");
+    EXPECT_EQ(folder2.title, "Test");
 }
 
 TEST(Database, DeleteFolder)
@@ -370,29 +370,36 @@ TEST(Database, GetAllFolders)
     EXPECT_EQ(folders.size(), 2);
 }
 
-TEST(Database, SearchNotes)
+TEST(Database, searchNotes)
 {
-    // Remove current database
+    // Supprimez la base de données actuelle
     std::remove("test_search_notes.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
     storage->sync_schema();
+
+    Folder folder1 = {
+        -1,
+        "TestFolder",
+    };
+    insertObject(folder1);
+
     Note note1 = {
         -1,
-        -1,
+        folder1.id,
         "Test1",
         "This is a test note",
         std::time(nullptr),
     };
     Note note2 = {
         -1,
-        -1,
+        folder1.id,
         "Test2",
         "This is another test note",
         std::time(nullptr) - 1,
     };
     Note note3 = {
         -1,
-        -1,
+        folder1.id,
         "Test3",
         "This note does not contain the keyword",
         std::time(nullptr) - 2,
@@ -404,9 +411,12 @@ TEST(Database, SearchNotes)
 
     std::string keyword = "test";
     auto notes = searchNotes(keyword);
-    EXPECT_EQ(notes.size(), 2);
-    EXPECT_EQ(notes[0].title, "Test1");
-    EXPECT_EQ(notes[1].title, "Test2");
+    EXPECT_EQ(notes.size(), 5);
+    EXPECT_EQ(notes[0].title, "TestFolder");
+    EXPECT_EQ(notes[1].title, "Test1");
+    EXPECT_EQ(notes[2].title, "Test2");
+    EXPECT_EQ(notes[3].title, "Test1");
+    EXPECT_EQ(notes[4].title, "Test2");
 
     keyword = "another";
     notes = searchNotes(keyword);

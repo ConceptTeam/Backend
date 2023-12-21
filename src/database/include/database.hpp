@@ -25,7 +25,7 @@ struct Note
 struct Folder
 {
     int id;
-    std::string name;
+    std::string title;
 
     Folder() = default;
 };
@@ -60,7 +60,7 @@ inline auto initStorage(const std::string &path)
                                    make_column("last_modified", &Note::last_modified)),
                         make_table("folders",
                                    make_column("id", &Folder::id, primary_key()),
-                                   make_column("title", &Folder::name)),
+                                   make_column("title", &Folder::title)),
                         make_table("focus_time",
                                    make_column("id", &FocusTime::id, primary_key()),
                                    make_column("creation_time", &FocusTime::creation_time),
@@ -88,7 +88,7 @@ void updateObject(T &obj)
 }
 
 template <typename T>
-void getObjectById(int id)
+T getObjectById(int id)
 {
     storage->get<T>(id);
 }
@@ -103,14 +103,31 @@ std::vector<Note> searchNotes(std::string &keyword)
 {
     std::vector<Note> notes;
 
-    auto results = storage->get_all<Note>(
-        where(like(&Note::content, "%" + keyword + "%")),
-        multi_order_by(order_by(&Note::last_modified).desc(), order_by(&Note::title)));
+    auto folderResults = storage->get_all<Note>(
+        where(like(&Folder::title, "%" + keyword + "%")),
+        order_by(&Folder::title));
 
-    for (auto &result : results)
+    auto titleResults = storage->get_all<Note>(
+        where(like(&Note::title, "%" + keyword + "%")),
+        order_by(&Note::title));
+
+    auto contentResults = storage->get_all<Note>(
+        where(like(&Note::content, "%" + keyword + "%")),
+        order_by(&Note::last_modified).desc());
+
+    for (auto &result : folderResults)
     {
         notes.push_back(result);
     }
+    for (auto &result : titleResults)
+    {
+        notes.push_back(result);
+    }
+    for (auto &result : contentResults)
+    {
+        notes.push_back(result);
+    }
+
     return notes;
 }
 
