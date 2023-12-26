@@ -99,36 +99,68 @@ void deleteObject(int id)
     storage->remove<T>(id);
 }
 
-std::vector<Note> searchNotes(std::string &keyword)
+std::vector<Note> searchTitle(std::string &keyword)
 {
-    std::vector<Note> notes;
+    std::vector<Note> results;
 
-    auto folderResults = storage->get_all<Note>(
-        where(like(&Folder::title, "%" + keyword + "%")),
-        order_by(&Folder::title));
-
+    // Search in titles
     auto titleResults = storage->get_all<Note>(
         where(like(&Note::title, "%" + keyword + "%")),
-        order_by(&Note::title));
+        order_by(&Note::id));
 
+    results.insert(results.end(), titleResults.begin(), titleResults.end());
+
+    // Search in contents
     auto contentResults = storage->get_all<Note>(
         where(like(&Note::content, "%" + keyword + "%")),
         order_by(&Note::last_modified).desc());
 
-    for (auto &result : folderResults)
+    results.insert(results.end(), contentResults.begin(), contentResults.end());
+
+    return results;
+}
+
+std::vector<int> searchLine(const Note &note, std::string &keyword)
+{
+    std::vector<int> lineNumbers;
+
+    if (note.title.find(keyword) != std::string::npos)
     {
-        notes.push_back(result);
-    }
-    for (auto &result : titleResults)
-    {
-        notes.push_back(result);
-    }
-    for (auto &result : contentResults)
-    {
-        notes.push_back(result);
+        lineNumbers.push_back(0); // 0 for title
     }
 
-    return notes;
+    std::istringstream iss(note.content);
+    std::string line;
+    int lineNum = 1;
+
+    while (std::getline(iss, line))
+    {
+        if (line.find(keyword) != std::string::npos)
+        {
+            lineNumbers.push_back(lineNum);
+        }
+        lineNum++;
+    }
+
+    return lineNumbers;
+}
+
+std::vector<std::pair<Note, int>> searchNotes(std::string &keyword)
+{
+    std::vector<std::pair<Note, int>> results;
+
+    auto notes = searchTitle(keyword);
+
+    for (auto &note : notes)
+    {
+        auto lineNumbers = searchLine(note, keyword);
+        for (auto lineNumber : lineNumbers)
+        {
+            results.emplace_back(note, lineNumber);
+        }
+    }
+
+    return results;
 }
 
 std::vector<FocusTime> getInterval(std::time_t start, std::time_t end)

@@ -370,62 +370,72 @@ TEST(Database, GetAllFolders)
     EXPECT_EQ(folders.size(), 2);
 }
 
-TEST(Database, searchNotes)
+TEST(Database, SearchTitle)
 {
-    // Supprimez la base de données actuelle
-    std::remove("test_search_notes.sqlite");
-    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    // Setup
+    std::remove("test_search_title.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_title.sqlite"));
     storage->sync_schema();
 
-    Folder folder1 = {
-        -1,
-        "TestFolder",
-    };
-    insertObject(folder1);
-
-    Note note1 = {
-        -1,
-        folder1.id,
-        "Test1",
-        "This is a test note",
-        std::time(nullptr),
-    };
-    Note note2 = {
-        -1,
-        folder1.id,
-        "Test2",
-        "This is another test note",
-        std::time(nullptr) - 1,
-    };
-    Note note3 = {
-        -1,
-        folder1.id,
-        "Test3",
-        "This note does not contain the keyword",
-        std::time(nullptr) - 2,
-    };
+    Note note1 = {1, -1, "Title Keyword", "Content without", 0};
+    Note note2 = {2, -1, "Keyword here", "Content with Keyword", 0};
+    Note note3 = {3, -1, "Another note", "Not in this one", 0};
 
     insertObject(note1);
     insertObject(note2);
     insertObject(note3);
 
-    std::string keyword = "test";
-    auto notes = searchNotes(keyword);
-    EXPECT_EQ(notes.size(), 5);
-    EXPECT_EQ(notes[0].title, "TestFolder");
-    EXPECT_EQ(notes[1].title, "Test1");
-    EXPECT_EQ(notes[2].title, "Test2");
-    EXPECT_EQ(notes[3].title, "Test1");
-    EXPECT_EQ(notes[4].title, "Test2");
+    // Test
+    std::string keyword = "Keyword";
+    auto notes = searchTitle(keyword);
+    EXPECT_EQ(notes.size(), 3);
+    EXPECT_EQ(notes[0].title, "Title Keyword");
+    EXPECT_EQ(notes[1].title, "Keyword here");
+    EXPECT_EQ(notes[2].title, "Keyword here");
+}
 
-    keyword = "another";
-    notes = searchNotes(keyword);
-    EXPECT_EQ(notes.size(), 1);
-    EXPECT_EQ(notes[0].title, "Test2");
+TEST(Database, SearchLine)
+{
+    // Setup
+    Note testNote = {-1, -1, "Keyword in title", "First line\nSecond line with Keyword", 0};
 
-    keyword = "nonexistent";
-    notes = searchNotes(keyword);
-    EXPECT_EQ(notes.size(), 0);
+    // Test title
+    std::string keyword = "Keyword";
+    auto lineNumbersTitle = searchLine(testNote, keyword);
+    EXPECT_EQ(lineNumbersTitle.size(), 2);
+    EXPECT_EQ(lineNumbersTitle[0], 0);
+    EXPECT_EQ(lineNumbersTitle[1], 2);
+
+    // Test content
+    keyword = "Second";
+    auto lineNumbersContent = searchLine(testNote, keyword);
+    EXPECT_EQ(lineNumbersContent.size(), 1);
+    EXPECT_EQ(lineNumbersContent[0], 2);
+}
+
+TEST(Database, SearchNotes)
+{
+    // Setup
+    std::remove("test_search_notes.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    storage->sync_schema();
+
+    Note note1 = {1, -1, "Keyword in title", "Content without", 0};
+    Note note2 = {2, -1, "Title without", "Keyword in first line\nKeyword in Second line", 0};
+
+    insertObject(note1);
+    insertObject(note2);
+
+    // Test
+    std::string keyword = "Keyword";
+    auto results = searchNotes(keyword);
+    EXPECT_EQ(results.size(), 3);
+    EXPECT_EQ(results[0].first.title, "Keyword in title");
+    EXPECT_EQ(results[0].second, 0);
+    EXPECT_EQ(results[1].first.title, "Title without");
+    EXPECT_EQ(results[1].second, 1);
+    EXPECT_EQ(results[2].first.title, "Title without");
+    EXPECT_EQ(results[2].second, 2);
 }
 
 TEST(Database, getInterval)
