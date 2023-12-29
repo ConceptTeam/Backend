@@ -1,3 +1,5 @@
+#ifndef CONCEPTAPP_DATABASE_H
+#define CONCEPTAPP_DATABASE_H
 #include <iostream>
 #include <optional>
 #include <vector>
@@ -112,3 +114,4 @@ void deleteObject(int id)
 {
     storage->remove<T>(id);
 }
+#endif //CONCEPTAPP_DATABASE_H
