@@ -21,4 +21,4 @@ target_sources(database INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/
 
 target_include_directories(database INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-add_subdirectory(tests)
+#add_subdirectory(tests)

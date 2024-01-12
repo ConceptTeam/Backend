@@ -1,3 +1,5 @@
+#ifndef CONCEPTAPP_DATABASE_H
+#define CONCEPTAPP_DATABASE_H
 #include <iostream>
 #include <optional>
 #include <vector>
@@ -90,7 +92,7 @@ void updateObject(T &obj)
 template <typename T>
 T getObjectById(int id)
 {
-    storage->get<T>(id);
+    return storage->get<T>(id);
 }
 
 template <typename T>
@@ -177,3 +179,4 @@ std::vector<FocusTime> getInterval(std::time_t start, std::time_t end)
     }
     return focus_times;
 }
+#endif //CONCEPTAPP_DATABASE_H
