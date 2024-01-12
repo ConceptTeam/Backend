@@ -22,33 +22,23 @@ struct Note
     std::time_t last_modified;
 
     Note() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct Folder
 {
     int id;
-    std::string name;
+    std::string title;
 
     Folder() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct FocusTime
 {
     int id;
-    std::time_t start_time;
-    std::time_t end_time;
+    std::time_t creation_time;
     std::time_t time_spent;
 
     FocusTime() = default;
-
-    // int insert();
-    // void update();
 };
 
 struct Command
@@ -58,9 +48,6 @@ struct Command
     std::string description;
 
     Command() = default;
-
-    // int insert();
-    // void update();
 };
 
 inline auto initStorage(const std::string &path)
@@ -75,11 +62,10 @@ inline auto initStorage(const std::string &path)
                                    make_column("last_modified", &Note::last_modified)),
                         make_table("folders",
                                    make_column("id", &Folder::id, primary_key()),
-                                   make_column("title", &Folder::name)),
+                                   make_column("title", &Folder::title)),
                         make_table("focus_time",
                                    make_column("id", &FocusTime::id, primary_key()),
-                                   make_column("start_time", &FocusTime::start_time),
-                                   make_column("end_time", &FocusTime::end_time),
+                                   make_column("creation_time", &FocusTime::creation_time),
                                    make_column("time_spent", &FocusTime::time_spent)),
                         make_table("commands",
                                    make_column("id", &Command::id, primary_key()),
@@ -113,5 +99,84 @@ template <typename T>
 void deleteObject(int id)
 {
     storage->remove<T>(id);
+}
+
+std::vector<Note> searchTitle(std::string &keyword)
+{
+    std::vector<Note> results;
+
+    // Search in titles
+    auto titleResults = storage->get_all<Note>(
+        where(like(&Note::title, "%" + keyword + "%")),
+        order_by(&Note::id));
+
+    results.insert(results.end(), titleResults.begin(), titleResults.end());
+
+    // Search in contents
+    auto contentResults = storage->get_all<Note>(
+        where(like(&Note::content, "%" + keyword + "%")),
+        order_by(&Note::last_modified).desc());
+
+    results.insert(results.end(), contentResults.begin(), contentResults.end());
+
+    return results;
+}
+
+std::vector<int> searchLine(const Note &note, std::string &keyword)
+{
+    std::vector<int> lineNumbers;
+
+    if (note.title.find(keyword) != std::string::npos)
+    {
+        lineNumbers.push_back(0); // 0 for title
+    }
+
+    std::istringstream iss(note.content);
+    std::string line;
+    int lineNum = 1;
+
+    while (std::getline(iss, line))
+    {
+        if (line.find(keyword) != std::string::npos)
+        {
+            lineNumbers.push_back(lineNum);
+        }
+        lineNum++;
+    }
+
+    return lineNumbers;
+}
+
+std::vector<std::pair<Note, int>> searchNotes(std::string &keyword)
+{
+    std::vector<std::pair<Note, int>> results;
+
+    auto notes = searchTitle(keyword);
+
+    for (auto &note : notes)
+    {
+        auto lineNumbers = searchLine(note, keyword);
+        for (auto lineNumber : lineNumbers)
+        {
+            results.emplace_back(note, lineNumber);
+        }
+    }
+
+    return results;
+}
+
+std::vector<FocusTime> getInterval(std::time_t start, std::time_t end)
+{
+    std::vector<FocusTime> focus_times;
+
+    auto results = storage->get_all<FocusTime>(
+        where(between(&FocusTime::creation_time, start, end)),
+        multi_order_by(order_by(&FocusTime::creation_time).desc()));
+
+    for (auto &result : results)
+    {
+        focus_times.push_back(result);
+    }
+    return focus_times;
 }
 #endif //CONCEPTAPP_DATABASE_H

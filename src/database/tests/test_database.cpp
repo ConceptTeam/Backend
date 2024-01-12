@@ -132,11 +132,11 @@ TEST(Database, UpdateFolder)
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
     folder.id = 1;
-    folder.name = "Test2";
+    folder.title = "Test2";
     updateObject(folder);
     auto folders = storage->get_all<Folder>();
     EXPECT_EQ(folders.size(), 1);
-    EXPECT_EQ(folders[0].name, "Test2");
+    EXPECT_EQ(folders[0].title, "Test2");
 }
 
 TEST(Database, GetFolderById)
@@ -151,7 +151,7 @@ TEST(Database, GetFolderById)
     int id = insertObject(folder);
     EXPECT_EQ(id, 1);
     auto folder2 = storage->get<Folder>(1);
-    EXPECT_EQ(folder2.name, "Test");
+    EXPECT_EQ(folder2.title, "Test");
 }
 
 TEST(Database, DeleteFolder)
@@ -176,14 +176,13 @@ TEST(Database, InsertFocusTime)
     std::remove("test_insert_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_insert_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
         0,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
 }
 
@@ -193,25 +192,22 @@ TEST(Database, UpdateFocusTime)
     std::remove("test_update_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_update_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
         0,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
-    focusTime.id = 1;
-    focusTime.start_time = 1;
-    focusTime.end_time = 1;
-    focusTime.time_spent = 1;
-    updateObject(focusTime);
-    auto focusTimes = storage->get_all<FocusTime>();
-    EXPECT_EQ(focusTimes.size(), 1);
-    EXPECT_EQ(focusTimes[0].start_time, 1);
-    EXPECT_EQ(focusTimes[0].end_time, 1);
-    EXPECT_EQ(focusTimes[0].time_spent, 1);
+    focus_time.id = 1;
+    focus_time.creation_time = 1;
+    focus_time.time_spent = 1;
+    updateObject(focus_time);
+    auto focus_times = storage->get_all<FocusTime>();
+    EXPECT_EQ(focus_times.size(), 1);
+    EXPECT_EQ(focus_times[0].creation_time, 1);
+    EXPECT_EQ(focus_times[0].time_spent, 1);
 }
 
 TEST(Database, GetFocusTimeById)
@@ -220,19 +216,17 @@ TEST(Database, GetFocusTimeById)
     std::remove("test_get_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_get_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
         0,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
-    auto focusTime2 = storage->get<FocusTime>(1);
-    EXPECT_EQ(focusTime2.start_time, 0);
-    EXPECT_EQ(focusTime2.end_time, 0);
-    EXPECT_EQ(focusTime2.time_spent, 0);
+    auto focus_time2 = storage->get<FocusTime>(1);
+    EXPECT_EQ(focus_time2.creation_time, 0);
+    EXPECT_EQ(focus_time2.time_spent, 0);
 }
 
 TEST(Database, DeleteFocusTime)
@@ -241,18 +235,17 @@ TEST(Database, DeleteFocusTime)
     std::remove("test_delete_focus_time.sqlite");
     storage = std::make_unique<Storage>(initStorage("test_delete_focus_time.sqlite"));
     storage->sync_schema();
-    FocusTime focusTime = {
+    FocusTime focus_time = {
         -1,
-        0,
         0,
         0,
     };
 
-    int id = insertObject(focusTime);
+    int id = insertObject(focus_time);
     EXPECT_EQ(id, 1);
     deleteObject<FocusTime>(id);
-    auto focusTimes = storage->get_all<FocusTime>();
-    EXPECT_EQ(focusTimes.size(), 0);
+    auto focus_times = storage->get_all<FocusTime>();
+    EXPECT_EQ(focus_times.size(), 0);
 }
 
 TEST(Database, InsertCommand)
@@ -377,4 +370,122 @@ TEST(Database, GetAllFolders)
     insertObject(folder2);
     auto folders = storage->get_all<Folder>();
     EXPECT_EQ(folders.size(), 2);
+}
+
+TEST(Database, SearchTitle)
+{
+    // Setup
+    std::remove("test_search_title.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_title.sqlite"));
+    storage->sync_schema();
+
+    Note note1 = {1, -1, "Title Keyword", "Content without", 0};
+    Note note2 = {2, -1, "Keyword here", "Content with Keyword", 0};
+    Note note3 = {3, -1, "Another note", "Not in this one", 0};
+
+    insertObject(note1);
+    insertObject(note2);
+    insertObject(note3);
+
+    // Test
+    std::string keyword = "Keyword";
+    auto notes = searchTitle(keyword);
+    EXPECT_EQ(notes.size(), 3);
+    EXPECT_EQ(notes[0].title, "Title Keyword");
+    EXPECT_EQ(notes[1].title, "Keyword here");
+    EXPECT_EQ(notes[2].title, "Keyword here");
+}
+
+TEST(Database, SearchLine)
+{
+    // Setup
+    Note testNote = {-1, -1, "Keyword in title", "First line\nSecond line with Keyword", 0};
+
+    // Test title
+    std::string keyword = "Keyword";
+    auto lineNumbersTitle = searchLine(testNote, keyword);
+    EXPECT_EQ(lineNumbersTitle.size(), 2);
+    EXPECT_EQ(lineNumbersTitle[0], 0);
+    EXPECT_EQ(lineNumbersTitle[1], 2);
+
+    // Test content
+    keyword = "Second";
+    auto lineNumbersContent = searchLine(testNote, keyword);
+    EXPECT_EQ(lineNumbersContent.size(), 1);
+    EXPECT_EQ(lineNumbersContent[0], 2);
+}
+
+TEST(Database, SearchNotes)
+{
+    // Setup
+    std::remove("test_search_notes.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_search_notes.sqlite"));
+    storage->sync_schema();
+
+    Note note1 = {1, -1, "Keyword in title", "Content without", 0};
+    Note note2 = {2, -1, "Title without", "Keyword in first line\nKeyword in Second line", 0};
+
+    insertObject(note1);
+    insertObject(note2);
+
+    // Test
+    std::string keyword = "Keyword";
+    auto results = searchNotes(keyword);
+    EXPECT_EQ(results.size(), 3);
+    EXPECT_EQ(results[0].first.title, "Keyword in title");
+    EXPECT_EQ(results[0].second, 0);
+    EXPECT_EQ(results[1].first.title, "Title without");
+    EXPECT_EQ(results[1].second, 1);
+    EXPECT_EQ(results[2].first.title, "Title without");
+    EXPECT_EQ(results[2].second, 2);
+}
+
+TEST(Database, getInterval)
+{
+    // Remove current database
+    std::remove("test_get_interval_focus_time.sqlite");
+    storage = std::make_unique<Storage>(initStorage("test_get_interval_focus_time.sqlite"));
+    storage->sync_schema();
+    FocusTime focus_time1 = {
+        -1,
+        std::time(nullptr),
+        0,
+    };
+    FocusTime focus_time2 = {
+        -1,
+        std::time(nullptr) - 1,
+        0,
+    };
+    FocusTime focus_time3 = {
+        -1,
+        std::time(nullptr) - 2,
+        0,
+    };
+
+    insertObject(focus_time1);
+    insertObject(focus_time2);
+    insertObject(focus_time3);
+
+    auto focus_times = getInterval(0, std::time(nullptr));
+    EXPECT_EQ(focus_times.size(), 3);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr));
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times[2].creation_time, std::time(nullptr) - 2);
+
+    focus_times = getInterval(std::time(nullptr) - 1, std::time(nullptr));
+    EXPECT_EQ(focus_times.size(), 2);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr));
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 1);
+
+    focus_times = getInterval(std::time(nullptr) - 2, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times.size(), 2);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr) - 1);
+    EXPECT_EQ(focus_times[1].creation_time, std::time(nullptr) - 2);
+
+    focus_times = getInterval(std::time(nullptr) - 3, std::time(nullptr) - 2);
+    EXPECT_EQ(focus_times.size(), 1);
+    EXPECT_EQ(focus_times[0].creation_time, std::time(nullptr) - 2);
+
+    focus_times = getInterval(std::time(nullptr) - 4, std::time(nullptr) - 3);
+    EXPECT_EQ(focus_times.size(), 0);
 }
